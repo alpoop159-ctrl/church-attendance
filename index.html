@@ -73,7 +73,6 @@ hr{border:0;border-top:1px solid var(--line);margin:22px 0}
 @media(max-width:600px){header{padding:22px 12px}nav{margin:10px 10px 0;border-radius:13px}nav button{padding:9px 13px;font-size:13px}main{margin-top:12px;padding:0 10px}.panel{border-radius:16px;padding:16px}.stats{gap:7px}.stat{padding:13px 5px;font-size:11px}.stat b{font-size:22px}.row{gap:7px}.row>*{flex:1 1 100%}.student{align-items:flex-start;flex-direction:column}.student .row{width:100%;flex-wrap:wrap}.student .row button{flex:1}input,select{font-size:16px}}
 @media(min-width:700px){#students>input{max-width:420px}#students>button.primary{min-width:170px}.panel{min-height:180px}}
 
-
 /* Student profiles and drawer navigation */
 :root{--green:#087f5b;--dark:#12372d;--ink:#18332b;--muted:#64756e;--line:#e3ebe6}
 body{padding-top:0}
@@ -102,7 +101,6 @@ body{padding-top:0}
 .detail-line{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-bottom:1px solid #edf1ee}.detail-line:last-child{border:0}.detail-line span{color:#64756e}.detail-line b{text-align:left;overflow-wrap:anywhere}
 .empty-photo{display:grid;place-items:center;background:#eaf3ee;color:#087f5b}
 @media(max-width:600px){#students .form-grid,.profile-grid{grid-template-columns:1fr}.profile-hero{align-items:flex-start}.profile-kpis{gap:6px}.profile-kpi{font-size:11px}.profile-kpi b{font-size:19px}}
-
 
 /* Gold and ivory church theme */
 :root{--green:#b88722;--dark:#5a3d0b;--gold:#d6a637;--ink:#332710;--muted:#766744;--line:#eadcb8;--surface:rgba(255,253,247,.96)}
@@ -140,9 +138,10 @@ table{border-color:#eadcb8}th{background:#f5ebd1;color:#6f5318}
 #reader{border-color:#d8bd78;background:#fffaf0}
 #scanresult{background:#f7efd9;color:#755618;border:1px solid #eadcb8}
 #qrout{border:2px solid #d6b45d}
-
 </style>
-<script src="qrcode-offline.js"></script>
+<!-- مكتبة قراءة وتوليد الـ QR المعتمدة -->
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js"></script>
 </head>
 <body>
 <div class="topbar"><button class="menu-btn" onclick="toggleDrawer(true)" aria-label="فتح القائمة">☰</button><div class="topbar-title">كشف حضوري وغياب<div class="topbar-sub">كنيسة العذراء مريم</div></div><span class="brand-cross" aria-label="صليب">✝</span></div>
@@ -168,9 +167,7 @@ table{border-color:#eadcb8}th{background:#f5ebd1;color:#6f5318}
 <div class="wide"><label>اسم الطالب بالكامل *</label><input id="sname" placeholder="اسم الطالب بالكامل"></div>
 <div><label>تاريخ الميلاد</label><input id="sdob" type="date" onchange="updateAgePreview()"></div>
 <div><label>العمر المحسوب تلقائيًا</label><input id="sage" readonly placeholder="يُحسب من تاريخ الميلاد"></div>
-<div><label>الفصل / المجموعة</label><input id="sclass" placeholder="الفصل أو المجموعة"></div>
-<div><label>اسم ولي الأمر</label><input id="sguardian" placeholder="اسم ولي الأمر"></div>
-<div><label>رقم هاتف ولي الأمر</label><input id="sphone" type="tel" placeholder="رقم الهاتف"></div>
+<div class="wide"><label>الفصل / المجموعة</label><input id="sclass" placeholder="الفصل أو المجموعة"></div>
 <div class="wide"><label>ملاحظات</label><textarea id="snotes" rows="3" placeholder="ملاحظات صحية أو تعليمية أو أي تفاصيل مهمة" style="width:100%;padding:12px;border:1px solid #d5e1da;border-radius:12px;font:inherit"></textarea></div>
 </div>
 <div class="row"><button class="primary" id="saveStudentBtn" onclick="addStudent()">حفظ بيانات الطالب</button><button class="gray" onclick="resetStudentForm()">تفريغ الحقول</button></div>
@@ -179,8 +176,16 @@ table{border-color:#eadcb8}th{background:#f5ebd1;color:#6f5318}
 <section id="profiles" class="panel"><h2>بروفايلات الطلاب</h2><p class="small">افتح بروفايل أي طالب لمشاهدة بياناته كاملة وسجل الحضور والغياب.</p><input id="profileSearch" placeholder="ابحث عن طالب..." oninput="renderProfiles()"><div id="profilelist" class="profile-cards"></div></section>
 <section id="profileview" class="panel"><button class="gray" onclick="tab('profiles')">→ الرجوع للبروفايلات</button><div id="profileDetails"></div></section>
 <section id="scan" class="panel">
-<h2>مسح كود الطالب</h2><p class="small">المسح يعمل دون إنترنت باستخدام كاميرا الموبايل. اسمح باستخدام الكاميرا عند الطلب.</p>
-<div id="reader"><video id="scanvideo" muted playsinline style="width:100%;max-width:420px;border-radius:12px;background:#111"></video></div><button class="primary" onclick="startScan()">تشغيل الكاميرا</button> <button class="gray" onclick="stopScan()">إيقاف</button>
+<h2>مسح كود الطالب</h2>
+<p class="small">اضغط على زر السماح بالأذونات أدناه لتشغيل الكاميرا وسحب إذن التخزين والكاميرا.</p>
+<div class="row" style="margin-bottom:12px;">
+  <button class="primary" onclick="requestPermissions()">طلب أذونات الكاميرا والتخزين</button>
+</div>
+<div id="reader" style="width:100%;"></div>
+<div class="row" style="margin-top:12px;">
+  <button class="primary" onclick="startScan()">تشغيل الكاميرا</button> 
+  <button class="danger" onclick="stopScan()">إيقاف الكاميرا</button>
+</div>
 <div id="scanresult" role="status" aria-live="polite">حالة الكاميرا: لم يتم تشغيلها بعد.</div>
 </section>
 <section id="manual" class="panel">
@@ -202,7 +207,6 @@ let db={students:[],records:{},closed:{},settings:{start:'',end:''}};
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x&&x.students)db=x}catch(e){}}
 function save(){localStorage.setItem(KEY,JSON.stringify(db));render()}
 function today(){let d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
-function tab(id){document.querySelectorAll('.panel').forEach(x=>x.classList.toggle('active',x.id===id));document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x.dataset.tab===id));if(id==='scan'){}}
 
 let editingStudentId=null,studentPhotoData='';
 function toggleDrawer(open){document.getElementById('drawer').classList.toggle('open',open);document.getElementById('drawerShade').classList.toggle('open',open)}
@@ -211,49 +215,110 @@ document.querySelectorAll('.drawer button').forEach(b=>b.addEventListener('click
 function calcAge(dob){if(!dob)return '';let b=new Date(dob+'T00:00:00'),n=new Date();if(isNaN(b)||b>n)return '';let y=n.getFullYear()-b.getFullYear(),m=n.getMonth()-b.getMonth(),d=n.getDate()-b.getDate();if(d<0)m--;if(m<0){y--;m+=12}if(y<0)return '';return y+' سنة'+(m?' و '+m+' شهر':'')}
 function updateAgePreview(){document.getElementById('sage').value=calcAge(document.getElementById('sdob').value)||'—'}
 function previewPhoto(e){let f=e.target.files&&e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){alert('اختر ملف صورة فقط');e.target.value='';return}let r=new FileReader();r.onload=()=>{let im=new Image();im.onload=()=>{let c=document.createElement('canvas'),scale=Math.min(1,600/Math.max(im.width,im.height));c.width=Math.round(im.width*scale);c.height=Math.round(im.height*scale);c.getContext('2d').drawImage(im,0,0,c.width,c.height);studentPhotoData=c.toDataURL('image/jpeg',.78);let p=document.getElementById('photoPreview');p.src=studentPhotoData;p.style.display='block'};im.src=r.result};r.readAsDataURL(f)}
-function resetStudentForm(){editingStudentId=null;studentPhotoData='';['sname','sdob','sage','sclass','sguardian','sphone','snotes'].forEach(id=>document.getElementById(id).value='');document.getElementById('sphoto').value='';document.getElementById('photoPreview').removeAttribute('src');document.getElementById('photoPreview').style.display='none';document.getElementById('studentFormTitle').textContent='إضافة طالب جديد';document.getElementById('saveStudentBtn').textContent='حفظ بيانات الطالب'}
-function addStudent(){let n=document.getElementById('sname').value.trim();if(!n){alert('اكتب اسم الطالب');return}let data={name:n,dob:document.getElementById('sdob').value,group:document.getElementById('sclass').value.trim(),guardian:document.getElementById('sguardian').value.trim(),guardianPhone:document.getElementById('sphone').value.trim(),notes:document.getElementById('snotes').value.trim(),photo:studentPhotoData};if(editingStudentId){let st=db.students.find(x=>x.id===editingStudentId);if(st)Object.assign(st,data)}else{db.students.push({id:'K'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...data})}resetStudentForm();save();alert('تم حفظ بيانات الطالب بنجاح')}
-function editStudent(id){let s=db.students.find(x=>x.id===id);if(!s)return;editingStudentId=id;document.getElementById('sname').value=s.name||'';document.getElementById('sdob').value=s.dob||'';document.getElementById('sage').value=calcAge(s.dob)||'—';document.getElementById('sclass').value=s.group||'';document.getElementById('sguardian').value=s.guardian||'';document.getElementById('sphone').value=s.guardianPhone||'';document.getElementById('snotes').value=s.notes||'';studentPhotoData=s.photo||'';let im=document.getElementById('photoPreview');if(studentPhotoData){im.src=studentPhotoData;im.style.display='block'}else{im.removeAttribute('src');im.style.display='none'}document.getElementById('studentFormTitle').textContent='تعديل بيانات الطالب';document.getElementById('saveStudentBtn').textContent='حفظ التعديلات';tab('students');window.scrollTo({top:0,behavior:'smooth'})}
+function resetStudentForm(){editingStudentId=null;studentPhotoData='';['sname','sdob','sage','sclass','snotes'].forEach(id=>document.getElementById(id).value='');document.getElementById('sphoto').value='';document.getElementById('photoPreview').removeAttribute('src');document.getElementById('photoPreview').style.display='none';document.getElementById('studentFormTitle').textContent='إضافة طالب جديد';document.getElementById('saveStudentBtn').textContent='حفظ بيانات الطالب'}
+function addStudent(){let n=document.getElementById('sname').value.trim();if(!n){alert('اكتب اسم الطالب');return}let data={name:n,dob:document.getElementById('sdob').value,group:document.getElementById('sclass').value.trim(),notes:document.getElementById('snotes').value.trim(),photo:studentPhotoData};if(editingStudentId){let st=db.students.find(x=>x.id===editingStudentId);if(st)Object.assign(st,data)}else{db.students.push({id:'K'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),...data})}resetStudentForm();save();alert('تم حفظ بيانات الطالب بنجاح')}
+function editStudent(id){let s=db.students.find(x=>x.id===id);if(!s)return;editingStudentId=id;document.getElementById('sname').value=s.name||'';document.getElementById('sdob').value=s.dob||'';document.getElementById('sage').value=calcAge(s.dob)||'—';document.getElementById('sclass').value=s.group||'';document.getElementById('snotes').value=s.notes||'';studentPhotoData=s.photo||'';let im=document.getElementById('photoPreview');if(studentPhotoData){im.src=studentPhotoData;im.style.display='block'}else{im.removeAttribute('src');im.style.display='none'}document.getElementById('studentFormTitle').textContent='تعديل بيانات الطالب';document.getElementById('saveStudentBtn').textContent='حفظ التعديلات';tab('students');window.scrollTo({top:0,body:'smooth'})}
 function removeStudent(id){if(confirm('متأكد من حذف الطالب؟')){db.students=db.students.filter(s=>s.id!==id);save()}}
 function studentAvatar(s,cls=''){return s.photo?'<img class="'+cls+'" src="'+escapeHtml(s.photo)+'" alt="صورة '+escapeHtml(s.name)+'">':'<div class="avatar-placeholder '+cls+'">👤</div>'}
 function renderStudents(){let q=(document.getElementById('studentSearch')?.value||'').trim().toLowerCase();let arr=db.students.filter(s=>(s.name||'').toLowerCase().includes(q));document.getElementById('studentlist').innerHTML=arr.length?arr.map(s=>`<div class="student"><div><b>${escapeHtml(s.name)}</b><div class="small">${escapeHtml(s.group||'بدون مجموعة')} · ${s.id}</div></div><div class="row" style="flex:0 0 auto"><button class="gray" onclick="openProfile('${s.id}')">البروفايل</button><button class="gray" onclick="qr('${s.id}')">QR</button><button class="gray" onclick="editStudent('${s.id}')">تعديل</button><button class="danger" onclick="removeStudent('${s.id}')">حذف</button></div></div>`).join(''):'<p class="small">لا يوجد طلاب مطابقون.</p>'}
 function renderProfiles(){let q=(document.getElementById('profileSearch')?.value||'').trim().toLowerCase();let arr=db.students.filter(s=>(s.name||'').toLowerCase().includes(q));document.getElementById('profilelist').innerHTML=arr.length?arr.map(s=>`<button class="profile-card" onclick="openProfile('${s.id}')">${studentAvatar(s)}<span><b>${escapeHtml(s.name)}</b><small>${escapeHtml(s.group||'بدون مجموعة')} · ${escapeHtml(calcAge(s.dob)||'العمر غير محدد')}</small></span></button>`).join(''):'<p class="small">لا يوجد طلاب. أضف طالبًا أولًا.</p>'}
-function openProfile(id){let s=db.students.find(x=>x.id===id);if(!s)return;let rows=[];Object.keys(db.records).sort().reverse().forEach(d=>{if(db.records[d]&&db.records[d][id])rows.push([d,db.records[d][id]])});let present=rows.filter(x=>x[1]==='حضور').length,absent=rows.filter(x=>x[1]==='غياب').length,total=present+absent,rate=total?Math.round(present/total*100):0;let history=rows.length?rows.map(x=>`<tr><td>${x[0]}</td><td><span class="tag" style="background:${x[1]==='حضور'?'#e9f5ef':'#fff0ee'};color:${x[1]==='حضور'?'#087f5b':'#a52d23'}">${x[1]}</span></td></tr>`).join(''):'<tr><td colspan="2" class="small">لا يوجد سجل حضور أو غياب حتى الآن.</td></tr>';document.getElementById('profileDetails').innerHTML=`<div class="profile-hero">${studentAvatar(s)}<div><h3>${escapeHtml(s.name)}</h3><div class="small">${escapeHtml(s.group||'بدون مجموعة')} · ${escapeHtml(calcAge(s.dob)||'العمر غير محدد')}</div><div class="small">كود الطالب: ${escapeHtml(s.id)}</div></div></div><div class="row"><button class="primary" onclick="editStudent('${s.id}')">تعديل البيانات</button><button class="gray" onclick="qr('${s.id}')">عرض QR</button></div><div class="profile-kpis"><div class="profile-kpi"><b>${present}</b>أيام الحضور</div><div class="profile-kpi"><b>${absent}</b>أيام الغياب</div><div class="profile-kpi"><b>${rate}%</b>نسبة الحضور</div></div><div class="profile-section"><h3>البيانات الشخصية</h3><div class="detail-line"><span>الاسم بالكامل</span><b>${escapeHtml(s.name)}</b></div><div class="detail-line"><span>تاريخ الميلاد</span><b>${escapeHtml(s.dob||'غير مسجل')}</b></div><div class="detail-line"><span>العمر الحالي</span><b>${escapeHtml(calcAge(s.dob)||'غير محدد')}</b></div><div class="detail-line"><span>الفصل / المجموعة</span><b>${escapeHtml(s.group||'غير محدد')}</b></div></div><div class="profile-section"><h3>بيانات ولي الأمر</h3><div class="detail-line"><span>اسم ولي الأمر</span><b>${escapeHtml(s.guardian||'غير مسجل')}</b></div><div class="detail-line"><span>رقم الهاتف</span><b>${escapeHtml(s.guardianPhone||'غير مسجل')}</b></div></div><div class="profile-section"><h3>ملاحظات</h3><p>${escapeHtml(s.notes||'لا توجد ملاحظات مسجلة')}</p></div><div class="profile-section"><h3>سجل الحضور والغياب</h3><table><tr><th>التاريخ</th><th>الحالة</th></tr>${history}</table></div>`;tab('profileview')}
+function openProfile(id){let s=db.students.find(x=>x.id===id);if(!s)return;let rows=[];Object.keys(db.records).sort().reverse().forEach(d=>{if(db.records[d]&&db.records[d][id])rows.push([d,db.records[d][id]])});let present=rows.filter(x=>x[1]==='حضور').length,absent=rows.filter(x=>x[1]==='غياب').length,total=present+absent,rate=total?Math.round(present/total*100):0;let history=rows.length?rows.map(x=>`<tr><td>${x[0]}</td><td><span class="tag" style="background:${x[1]==='حضور'?'#e9f5ef':'#fff0ee'};color:${x[1]==='حضور'?'#087f5b':'#a52d23'}">${x[1]}</span></td></tr>`).join(''):'<tr><td colspan="2" class="small">لا يوجد سجل حضور أو غياب حتى الآن.</td></tr>';document.getElementById('profileDetails').innerHTML=`<div class="profile-hero">${studentAvatar(s)}<div><h3>${escapeHtml(s.name)}</h3><div class="small">${escapeHtml(s.group||'بدون مجموعة')} · ${escapeHtml(calcAge(s.dob)||'العمر غير محدد')}</div><div class="small">كود الطالب: ${escapeHtml(s.id)}</div></div></div><div class="row"><button class="primary" onclick="editStudent('${s.id}')">تعديل البيانات</button><button class="gray" onclick="qr('${s.id}')">عرض QR</button></div><div class="profile-kpis"><div class="profile-kpi"><b>${present}</b>أيام الحضور</div><div class="profile-kpi"><b>${absent}</b>أيام الغياب</div><div class="profile-kpi"><b>${rate}%</b>نسبة الحضور</div></div><div class="profile-section"><h3>البيانات الشخصية</h3><div class="detail-line"><span>الاسم بالكامل</span><b>${escapeHtml(s.name)}</b></div><div class="detail-line"><span>تاريخ الميلاد</span><b>${escapeHtml(s.dob||'غير مسجل')}</b></div><div class="detail-line"><span>العمر الحالي</span><b>${escapeHtml(calcAge(s.dob)||'غير محدد')}</b></div><div class="detail-line"><span>الفصل / المجموعة</span><b>${escapeHtml(s.group||'غير محدد')}</b></div></div><div class="profile-section"><h3>ملاحظات</h3><p>${escapeHtml(s.notes||'لا توجد ملاحظات مسجلة')}</p></div><div class="profile-section"><h3>سجل الحضور والغياب</h3><table><tr><th>التاريخ</th><th>الحالة</th></tr>${history}</table></div>`;tab('profileview')}
 
-function qr(id){let s=db.students.find(x=>x.id===id);if(!s)return;document.getElementById('qrout')?.remove();let d=document.createElement('div');d.id='qrout';d.innerHTML='<h3>'+escapeHtml(s.name)+'</h3><canvas id="qrbox" width="220" height="220"></canvas><p>'+s.id+'</p><button class="gray" onclick="window.print()">طباعة الكود</button><button class="gray" onclick="saveQR(\''+s.id+'\')">حفظ صورة QR</button><button class="gray" onclick="document.getElementById(\'qrout\').remove()">إغلاق</button>';document.body.appendChild(d);drawQR(s.id,document.getElementById('qrbox'));d.scrollIntoView({behavior:'smooth'})}
-function drawQR(value,canvas){const q=new OfflineQRCode.QRCode(-1,OfflineQRCode.ErrorCorrectLevel.M);q.addData(value);q.make();const n=q.getModuleCount(),ctx=canvas.getContext('2d'),size=canvas.width,pad=8,cell=(size-pad*2)/n;ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);ctx.fillStyle='#000';for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(q.isDark(r,c))ctx.fillRect(Math.floor(pad+c*cell),Math.floor(pad+r*cell),Math.ceil(cell),Math.ceil(cell));}
-function saveQR(id){const s=db.students.find(x=>x.id===id);if(!s)return;const c=document.createElement('canvas');c.width=c.height=440;drawQR(id,c);const a=document.createElement('a');a.download='QR-'+s.name+'.png';a.href=c.toDataURL('image/png');a.click();}
+function qr(id){
+  let s=db.students.find(x=>x.id===id);
+  if(!s)return;
+  document.getElementById('qrout')?.remove();
+  let d=document.createElement('div');
+  d.id='qrout';
+  d.innerHTML='<h3>'+escapeHtml(s.name)+'</h3><div id="qrbox" style="margin:12px auto; display:flex; justify-content:center;"></div><p>'+s.id+'</p><button class="gray" onclick="window.print()">طباعة الكود</button><button class="gray" onclick="document.getElementById(\'qrout\').remove()">إغلاق</button>';
+  document.body.appendChild(d);
+  
+  // توليد كود QR باستخدام المكتبة
+  let qrContainer = document.getElementById('qrbox');
+  qrContainer.innerHTML = '';
+  try {
+    let typeNumber = 0;
+    let errorCorrectionLevel = 'M';
+    let qrObj = qrcode(typeNumber, errorCorrectionLevel);
+    qrObj.addData(s.id);
+    qrObj.make();
+    qrContainer.innerHTML = qrObj.createImgTag(5, 8);
+  } catch(err) {
+    qrContainer.innerHTML = '<p class="small">تعذر رسم الكود</p>';
+  }
+  d.scrollIntoView({behavior:'smooth'});
+}
+
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function mark(id,status){let day=today();if(db.closed[day]){alert('تم إغلاق سجل اليوم بالفعل');return false}db.records[day]=db.records[day]||{};if(db.records[day][id]){alert('تم تسجيل حالة الطالب اليوم بالفعل');return false}db.records[day][id]=status;save();return true}
 function markSelected(st){let id=document.getElementById('manualstudent').value;if(!id){alert('أضف طالبًا أولاً');return}if(mark(id,st))alert('تم التسجيل بنجاح')}
-let stream=null,scanActive=false,scanBusy=false,lastScan='',scanFrame=null;
-async function startScan(){
- const status=document.getElementById('scanresult');
- if(scanActive){status.textContent='الكاميرا تعمل بالفعل.';return}
- if(!window.isSecureContext && location.hostname!=='localhost' && location.hostname!=='127.0.0.1'){
-  status.textContent='لا يمكن فتح الكاميرا من اتصال غير آمن. افتح التطبيق من رابط HTTPS ثم جرّب مرة أخرى.';return;
- }
- if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){status.textContent='المتصفح لا يتيح الكاميرا. افتح الرابط من Chrome حديث وباتصال HTTPS.';return}
- if(!('BarcodeDetector' in window)){status.textContent='الكاميرا قد تعمل، لكن هذا المتصفح لا يدعم قراءة QR المدمجة دون إنترنت. جرّب Chrome محدّثًا على Android.';return}
- try{
-  const supported=await BarcodeDetector.getSupportedFormats();
-  if(!supported.includes('qr_code')){status.textContent='قارئ QR غير مدعوم في هذا المتصفح.';return}
-  const detector=new BarcodeDetector({formats:['qr_code']});
-  stream=await navigator.mediaDevices.getUserMedia({audio:false,video:{facingMode:{ideal:'environment'},width:{ideal:1280},height:{ideal:720}}});
-  const video=document.getElementById('scanvideo');video.srcObject=stream;await video.play();
-  scanActive=true;scanBusy=false;lastScan='';status.textContent='الكاميرا تعمل بنجاح. وجّهها إلى كود QR الخاص بالطالب.';
-  const loop=async()=>{
-   if(!scanActive)return;
-   if(video.readyState>=2&&!scanBusy){
-    try{const codes=await detector.detect(video);if(codes.length){const txt=(codes[0].rawValue||'').trim();if(txt&&txt!==lastScan){lastScan=txt;scanBusy=true;const st=db.students.find(x=>x.id===txt);if(!st)status.textContent='الكود غير مسجل في قاعدة البيانات: '+txt;else if(mark(st.id,'حضور'))status.textContent='تم تسجيل حضور الطالب: '+st.name;else status.textContent='الطالب مسجل بالفعل اليوم أو تم إغلاق اليوم.';setTimeout(()=>{lastScan='';scanBusy=false},1800)}}}
-    catch(err){console.warn('QR detection error',err);status.textContent='الكاميرا تعمل، لكن حدث خطأ أثناء قراءة الكود. قرّب الكود وثبّت الهاتف.'}
-   }
-   if(scanActive)scanFrame=requestAnimationFrame(loop);
-  };
-  scanFrame=requestAnimationFrame(loop);
- }catch(e){await stopScan();let msg='تعذر تشغيل الكاميرا. ';if(e.name==='NotAllowedError')msg+='اسمح للمتصفح باستخدام الكاميرا من إعدادات الموقع.';else if(e.name==='NotFoundError')msg+='لم يتم العثور على كاميرا بالجهاز.';else if(e.name==='NotReadableError')msg+='الكاميرا مستخدمة بواسطة تطبيق آخر؛ أغلقه وحاول مجددًا.';else msg+=e.message||'تحقق من إذن الكاميرا.';status.textContent=msg;}
+
+let html5QrCode = null;
+let scanActive = false;
+
+async function requestPermissions() {
+  const status = document.getElementById('scanresult');
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    stream.getTracks().forEach(track => track.stop());
+    status.textContent = 'تم منح إذن الكاميرا بنجاح. يمكنك الآن تشغيل المسح.';
+  } catch (err) {
+    status.textContent = 'تم رفض إذن الكاميرا أو حدث خطأ. يرجى السماح بالكاميرا من إعدادات المتصفح.';
+  }
 }
-async function stopScan(){scanActive=false;if(scanFrame!==null){cancelAnimationFrame(scanFrame);scanFrame=null}if(stream){stream.getTracks().forEach(t=>t.stop());stream=null}const v=document.getElementById('scanvideo');if(v){v.pause();v.srcObject=null}const status=document.getElementById('scanresult');if(status)status.textContent='تم إيقاف الكاميرا.';}
+
+async function startScan() {
+  const status = document.getElementById('scanresult');
+  if (scanActive) {
+    status.textContent = 'الكاميرا تعمل بالفعل.';
+    return;
+  }
+  try {
+    if (!html5QrCode) {
+      html5QrCode = new Html5Qrcode("reader");
+    }
+    const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+    await html5QrCode.start(
+      { facingMode: "environment" },
+      config,
+      (decodedText) => {
+        let txt = decodedText.trim();
+        const st = db.students.find(x => x.id === txt);
+        if (!st) {
+          status.textContent = 'الكود غير مسجل في قاعدة البيانات: ' + txt;
+        } else if (mark(st.id, 'حضور')) {
+          status.textContent = 'تم تسجيل حضور الطالب: ' + st.name;
+        } else {
+          status.textContent = 'الطالب مسجل بالفعل اليوم أو تم إغلاق اليوم.';
+        }
+      },
+      (errorMessage) => {
+        // خطأ المسح المعتاد أثناء البحث عن الكود يتم تجاوزه لعدم إزعاج المستخدم
+      }
+    );
+    scanActive = true;
+    status.textContent = 'الكاميرا تعمل بنجاح. وجّهها إلى كود QR الخاص بالطالب.';
+  } catch (err) {
+    scanActive = false;
+    status.textContent = 'تعذر تشغيل الكاميرا. تأكد من إعطاء إذن الكاميرا للموقع عبر زر الأذونات أعلاه.';
+  }
+}
+
+async function stopScan() {
+  const status = document.getElementById('scanresult');
+  if (html5QrCode && scanActive) {
+    try {
+      await html5QrCode.stop();
+      scanActive = false;
+      status.textContent = 'تم إيقاف الكاميرا.';
+    } catch (err) {
+      status.textContent = 'خطأ أثناء إيقاف الكاميرا.';
+    }
+  } else {
+    status.textContent = 'الكاميرا متوقفة بالفعل.';
+  }
+}
+
 function closeDay(){let d=today();if(db.closed[d]){alert('اليوم مغلق بالفعل');return}if(!confirm('تأكيد إغلاق اليوم وتسجيل كل غير المسجلين غيابًا؟'))return;db.records[d]=db.records[d]||{};db.students.forEach(s=>{if(!db.records[d][s.id])db.records[d][s.id]='غياب'});db.closed[d]=true;save();alert('تم إغلاق اليوم وتسجيل الغياب')}
 function render(){let d=today(),r=db.records[d]||{};document.getElementById('total').textContent=db.students.length;document.getElementById('present').textContent=Object.values(r).filter(x=>x==='حضور').length;document.getElementById('absent').textContent=Object.values(r).filter(x=>x==='غياب').length;document.getElementById('todaylabel').textContent='تاريخ اليوم: '+d+(db.closed[d]?' — تم إغلاق اليوم':'');document.getElementById('closedmsg').textContent=db.closed[d]?'تم إغلاق سجل اليوم.':'سجل اليوم مفتوح.';
 renderStudents();renderProfiles();
